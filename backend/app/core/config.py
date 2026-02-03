@@ -25,7 +25,10 @@ class Settings(BaseSettings):
     debug: bool = False
     
     # CORS Settings
-    cors_origins: List[str] = ["http://localhost:5173"]
+    cors_origins: List[str] = [
+        "http://localhost:5173",
+        "https://openoa-frontend.onrender.com"
+    ]
     
     # Logging
     log_level: str = "info"
