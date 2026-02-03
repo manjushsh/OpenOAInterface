@@ -21,7 +21,7 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: PYTHON_VERSION
-        value: "3.10"
+        value: "3.11.5"
       - key: USE_REAL_OPENOA
         value: "true"
 
