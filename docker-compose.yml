@@ -13,7 +13,7 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=development
-      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000", "https://openoa-frontend.onrender.com"]
       - LOG_LEVEL=debug
       - USE_REAL_OPENOA=true
     volumes:
