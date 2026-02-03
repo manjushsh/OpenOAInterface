@@ -1,0 +1,20 @@
+# OpenOA Web API - Backend Dependencies
+# Python 3.10+
+
+# FastAPI and ASGI server
+fastapi==0.109.0
+OpenOA==3.2
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# HTTP client (for testing external APIs if needed)
+httpx==0.26.0
+
+# OpenOA - Wind Plant Operational Assessment Library
+# This should be installed from the parent directory in development
+# For production, it would be installed from PyPI
+# openoa>=3.0.0
+
+# For now, we'll add it as an optional dependency
+# Install with: pip install -e ../../
