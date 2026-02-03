@@ -30,7 +30,7 @@ services:
     name: openoa-frontend
     runtime: static
     # region: oregon
-    plan: free
+    # plan: free
     branch: main
     rootDir: frontend
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
