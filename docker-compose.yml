@@ -1,0 +1,54 @@
+# docker-compose.yml - Local Development Environment
+# Run: docker-compose up --build
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: openoa-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+      - LOG_LEVEL=debug
+      - USE_REAL_OPENOA=true
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/app:/app/app
+      - ./backend/examples:/app/examples
+      # Persistent uploads directory
+      - ./backend/uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: node:20-alpine
+    container_name: openoa-frontend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      # Mount entire frontend for hot reload
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "corepack enable && pnpm install && pnpm dev --host"
+    depends_on:
+      - backend
+
+# Development notes:
+# - Backend runs on http://localhost:8000
+# - Frontend runs on http://localhost:5173
+# - API docs at http://localhost:8000/docs
+# - Hot reload enabled for both services
+# - File uploads persist in ./backend/uploads
+# - Uses pnpm for frontend package management
