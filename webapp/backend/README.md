@@ -14,7 +14,7 @@ FastAPI backend for the OpenOA web application, exposing wind plant operational 
 1. **Create a virtual environment:**
 ```bash
 cd webapp/backend
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 

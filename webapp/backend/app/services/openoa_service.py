@@ -277,17 +277,22 @@ class OpenOAService:
             raise
     
     def _get_examples_path(self) -> Path:
-        """Get the path to the OpenOA examples directory.
-        
-        Returns:
-            Path: Path to examples directory.
-        """
-        # We're in webapp/backend/app/services, so examples is ../../../../examples
-        current_file = Path(__file__)
-        # Go up: services -> app -> backend -> webapp -> OpenOA root
-        openoa_root = current_file.parent.parent.parent.parent.parent
-        examples_dir = openoa_root / "examples"
-        return examples_dir
+        """Locate the examples directory that ships with the backend."""
+        current_file = Path(__file__).resolve()
+
+        # Primary expected location: backend/examples
+        candidates = [
+            current_file.parents[2] / "examples",  # .../backend/examples
+            current_file.parents[3] / "examples",  # .../webapp/examples (fallback)
+            current_file.parents[4] / "examples",  # .../repo/examples (fallback)
+        ]
+
+        for path in candidates:
+            if path.exists():
+                return path
+
+        searched = ", ".join(str(p) for p in candidates)
+        raise FileNotFoundError(f"Examples directory not found. Checked: {searched}")
     
     def _get_mock_metadata(self) -> Dict[str, Any]:
         """Get mock plant metadata for when real data is unavailable.
