@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import get_settings
 from app.core.cors import setup_cors
 from app.api.routes import health
+from app.services.file_storage import FileStorage
 from app import __version__
 
 # Configure logging
@@ -35,6 +36,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Debug mode: {settings.debug}")
     logger.info(f"CORS origins: {settings.cors_origins}")
+    
+    # Clean up old uploaded files on startup
+    logger.info("Cleaning up old uploaded files...")
+    FileStorage._cleanup_old_files(max_age_hours=24)
+    logger.info("File cleanup complete")
     
     yield
     
@@ -60,10 +66,11 @@ setup_cors(app)
 app.include_router(health.router)
 
 # Import additional routers
-from app.api.routes import data, analysis
+from app.api.routes import data, analysis, upload
 
 app.include_router(data.router, prefix=settings.api_v1_prefix)
 app.include_router(analysis.router, prefix=settings.api_v1_prefix)
+app.include_router(upload.router, prefix=settings.api_v1_prefix)
 
 
 # Global exception handler

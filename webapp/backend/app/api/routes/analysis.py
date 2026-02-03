@@ -18,6 +18,7 @@ from app.models.schemas import (
     EYAGapAnalysisRequest
 )
 from app.services.openoa_service import openoa_service
+from app.services.file_storage import FileStorage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
@@ -51,9 +52,13 @@ async def run_aep_analysis(request: AEPRequest) -> AnalysisResponse:
         logger.info(f"Starting AEP analysis {analysis_id}")
         logger.debug(f"Analysis parameters: {request.model_dump()}")
         
+        # Get file path if file_id provided
+        file_path = FileStorage.get_file_path(request.file_id) if request.file_id else None
+        
         # Run the analysis
         result = openoa_service.run_aep_analysis_simple(
-            iterations=request.iterations
+            iterations=request.iterations,
+            file_path=file_path
         )
         
         logger.info(f"AEP analysis {analysis_id} completed successfully")

@@ -3,6 +3,7 @@
 
 # FastAPI and ASGI server
 fastapi==0.109.0
+python_multipart==0.0.22
 openoa==3.2.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3

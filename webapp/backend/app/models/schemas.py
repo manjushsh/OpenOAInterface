@@ -124,12 +124,14 @@ class AEPRequest(BaseModel):
     
     iterations: Optional[int] = Field(1000, description="Number of Monte Carlo iterations", ge=100, le=10000)
     uncertainty_method: Optional[str] = Field("bootstrap", description="Uncertainty quantification method")
+    file_id: Optional[str] = Field(None, description="Optional uploaded dataset ID. If None, uses default dataset")
     
     model_config = {
         "json_schema_extra": {
             "example": {
                 "iterations": 1000,
-                "uncertainty_method": "bootstrap"
+                "uncertainty_method": "bootstrap",
+                "file_id": None
             }
         }
     }
@@ -165,11 +167,13 @@ class ElectricalLossesRequest(BaseModel):
     """Request schema for electrical losses analysis."""
     
     loss_threshold_pct: Optional[float] = Field(5.0, description="Loss threshold percentage", ge=0, le=100)
+    file_id: Optional[str] = Field(None, description="Optional uploaded dataset ID. If None, uses default dataset")
     
     model_config = {
         "json_schema_extra": {
             "example": {
-                "loss_threshold_pct": 5.0
+                "loss_threshold_pct": 5.0,
+                "file_id": None
             }
         }
     }
@@ -179,11 +183,13 @@ class WakeLossesRequest(BaseModel):
     """Request schema for wake losses analysis."""
     
     bin_width: Optional[float] = Field(1.0, description="Wind speed bin width (m/s)", ge=0.5, le=5.0)
+    file_id: Optional[str] = Field(None, description="Optional uploaded dataset ID. If None, uses default dataset")
     
     model_config = {
         "json_schema_extra": {
             "example": {
-                "bin_width": 1.0
+                "bin_width": 1.0,
+                "file_id": None
             }
         }
     }
@@ -193,11 +199,13 @@ class TurbineIdealEnergyRequest(BaseModel):
     """Request schema for turbine ideal energy analysis."""
     
     use_lt_distribution: Optional[bool] = Field(True, description="Use long-term wind distribution")
+    file_id: Optional[str] = Field(None, description="Optional uploaded dataset ID. If None, uses default dataset")
     
     model_config = {
         "json_schema_extra": {
             "example": {
-                "use_lt_distribution": True
+                "use_lt_distribution": True,
+                "file_id": None
             }
         }
     }
@@ -207,11 +215,13 @@ class EYAGapAnalysisRequest(BaseModel):
     """Request schema for EYA gap analysis."""
     
     expected_aep_gwh: float = Field(..., description="Expected AEP from energy yield assessment (GWh)")
+    file_id: Optional[str] = Field(None, description="Optional uploaded dataset ID. If None, uses default dataset")
     
     model_config = {
         "json_schema_extra": {
             "example": {
-                "expected_aep_gwh": 35.0
+                "expected_aep_gwh": 35.0,
+                "file_id": None
             }
         }
     }
