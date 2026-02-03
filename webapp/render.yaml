@@ -2,7 +2,7 @@
 # Deploy both frontend and backend with a single configuration
 
 services:
-  # Backend - FastAPI Python Application
+  # Backend - FastAPI Python Application with OpenOA
   - type: web
     name: openoa-backend
     runtime: python
@@ -22,8 +22,10 @@ services:
         value: info
       - key: PYTHON_VERSION
         value: "3.10"
+      - key: USE_REAL_OPENOA
+        value: "true"
 
-  # Frontend - React Static Site
+  # Frontend - React + Vite + TypeScript with Tailwind CSS v4
   - type: web
     name: openoa-frontend
     runtime: static
@@ -31,7 +33,7 @@ services:
     plan: free
     branch: main
     rootDir: webapp/frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
     staticPublishPath: dist
     headers:
       - path: /*

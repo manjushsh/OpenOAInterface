@@ -1,7 +1,7 @@
 # Development Dockerfile for OpenOA Web API Backend
 # Includes hot-reload and development tools
 
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -19,6 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 # Copy application code
 COPY app ./app
+COPY examples ./examples
+
+# Create uploads directory for file uploads
+RUN mkdir -p /app/uploads
 
 # Expose port
 EXPOSE 8000
