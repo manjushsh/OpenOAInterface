@@ -82,7 +82,8 @@ class OpenOAService:
                 "aep",
                 "turbine_ideal_energy",
                 "electrical_losses",
-                "wake_losses"
+                "wake_losses",
+                "eya_gap_analysis"
             ]
         }
     
@@ -314,6 +315,284 @@ class OpenOAService:
             ],
             "note": "Mock metadata - actual data file not found"
         }
+    
+    def run_electrical_losses_analysis(self, loss_threshold_pct: float = 5.0, **kwargs) -> Dict[str, Any]:
+        """Run electrical losses analysis (mock or real based on configuration).
+        
+        Args:
+            loss_threshold_pct: Threshold for flagging high losses.
+            **kwargs: Additional analysis parameters.
+            
+        Returns:
+            dict: Electrical losses analysis results.
+        """
+        if settings.use_mock_data:
+            logger.info(f"Running MOCK electrical losses analysis")
+            return self._run_mock_electrical_losses(loss_threshold_pct)
+        else:
+            logger.info(f"Running REAL OpenOA electrical losses analysis")
+            return self._run_real_electrical_losses(loss_threshold_pct, **kwargs)
+    
+    def _run_mock_electrical_losses(self, loss_threshold_pct: float) -> Dict[str, Any]:
+        """Mock electrical losses analysis."""
+        metadata = self.get_sample_plant_metadata()
+        capacity_mw = metadata.get("capacity", 10.5)
+        
+        # Typical electrical losses are 1-3%
+        total_loss_pct = 2.1
+        
+        return {
+            "total_loss_pct": round(total_loss_pct, 2),
+            "threshold_pct": loss_threshold_pct,
+            "exceeds_threshold": total_loss_pct > loss_threshold_pct,
+            "loss_breakdown": {
+                "transformer_loss_pct": 0.8,
+                "collection_system_loss_pct": 0.9,
+                "transmission_loss_pct": 0.4
+            },
+            "plant_capacity_mw": capacity_mw,
+            "analysis_type": "electrical_losses_mock",
+            "notes": "Mock analysis for demonstration - USE_MOCK_DATA=True"
+        }
+    
+    def _run_real_electrical_losses(self, loss_threshold_pct: float, **kwargs) -> Dict[str, Any]:
+        """Real OpenOA electrical losses analysis."""
+        try:
+            from openoa.analysis import ElectricalLosses
+            
+            logger.info("Loading plant data for electrical losses analysis")
+            plant_data = self._load_real_plant_data()
+            
+            logger.info("Initializing ElectricalLosses analysis")
+            analysis = ElectricalLosses(plant=plant_data, **kwargs)
+            
+            logger.info("Running electrical losses analysis")
+            analysis.run()
+            
+            results_df = analysis.results
+            result_dict = results_df.iloc[0].to_dict() if not results_df.empty else {}
+            
+            capacity_mw = plant_data.metadata.capacity if hasattr(plant_data, 'metadata') else 8.2
+            total_loss_pct = float(result_dict.get('total_loss_pct', result_dict.get('electrical_losses', 0)))
+            
+            return {
+                "total_loss_pct": round(total_loss_pct, 2),
+                "threshold_pct": loss_threshold_pct,
+                "exceeds_threshold": total_loss_pct > loss_threshold_pct,
+                "plant_capacity_mw": capacity_mw,
+                "analysis_type": "electrical_losses_real",
+                "notes": "Real OpenOA electrical losses analysis",
+                "raw_columns": list(results_df.columns)
+            }
+        except ImportError:
+            raise ImportError("OpenOA library not found. Install it with: pip install openoa")
+        except Exception as e:
+            logger.error(f"Electrical losses analysis failed: {e}", exc_info=True)
+            raise
+    
+    def run_wake_losses_analysis(self, bin_width: float = 1.0, **kwargs) -> Dict[str, Any]:
+        """Run wake losses analysis (mock or real based on configuration).
+        
+        Args:
+            bin_width: Wind speed bin width in m/s.
+            **kwargs: Additional analysis parameters.
+            
+        Returns:
+            dict: Wake losses analysis results.
+        """
+        if settings.use_mock_data:
+            logger.info(f"Running MOCK wake losses analysis")
+            return self._run_mock_wake_losses(bin_width)
+        else:
+            logger.info(f"Running REAL OpenOA wake losses analysis")
+            return self._run_real_wake_losses(bin_width, **kwargs)
+    
+    def _run_mock_wake_losses(self, bin_width: float) -> Dict[str, Any]:
+        """Mock wake losses analysis."""
+        metadata = self.get_sample_plant_metadata()
+        capacity_mw = metadata.get("capacity", 10.5)
+        
+        # Typical wake losses are 5-15%
+        wake_loss_pct = 8.5
+        
+        return {
+            "wake_loss_pct": round(wake_loss_pct, 2),
+            "bin_width_ms": bin_width,
+            "num_turbines": metadata.get("num_turbines", 4),
+            "plant_capacity_mw": capacity_mw,
+            "analysis_type": "wake_losses_mock",
+            "notes": "Mock analysis for demonstration - USE_MOCK_DATA=True"
+        }
+    
+    def _run_real_wake_losses(self, bin_width: float, **kwargs) -> Dict[str, Any]:
+        """Real OpenOA wake losses analysis."""
+        try:
+            from openoa.analysis import WakeLosses
+            
+            logger.info("Loading plant data for wake losses analysis")
+            plant_data = self._load_real_plant_data()
+            
+            logger.info("Initializing WakeLosses analysis")
+            analysis = WakeLosses(plant=plant_data, **kwargs)
+            
+            logger.info("Running wake losses analysis")
+            analysis.run(bin_width=bin_width)
+            
+            results_df = analysis.results
+            result_dict = results_df.iloc[0].to_dict() if not results_df.empty else {}
+            
+            capacity_mw = plant_data.metadata.capacity if hasattr(plant_data, 'metadata') else 8.2
+            wake_loss_pct = float(result_dict.get('wake_loss_pct', result_dict.get('wake_losses', 0)))
+            
+            return {
+                "wake_loss_pct": round(wake_loss_pct, 2),
+                "bin_width_ms": bin_width,
+                "plant_capacity_mw": capacity_mw,
+                "analysis_type": "wake_losses_real",
+                "notes": "Real OpenOA wake losses analysis",
+                "raw_columns": list(results_df.columns)
+            }
+        except ImportError:
+            raise ImportError("OpenOA library not found. Install it with: pip install openoa")
+        except Exception as e:
+            logger.error(f"Wake losses analysis failed: {e}", exc_info=True)
+            raise
+    
+    def run_turbine_ideal_energy_analysis(self, use_lt_distribution: bool = True, **kwargs) -> Dict[str, Any]:
+        """Run turbine ideal energy analysis (mock or real based on configuration).
+        
+        Args:
+            use_lt_distribution: Whether to use long-term wind distribution.
+            **kwargs: Additional analysis parameters.
+            
+        Returns:
+            dict: Turbine ideal energy analysis results.
+        """
+        if settings.use_mock_data:
+            logger.info(f"Running MOCK turbine ideal energy analysis")
+            return self._run_mock_turbine_ideal_energy(use_lt_distribution)
+        else:
+            logger.info(f"Running REAL OpenOA turbine ideal energy analysis")
+            return self._run_real_turbine_ideal_energy(use_lt_distribution, **kwargs)
+    
+    def _run_mock_turbine_ideal_energy(self, use_lt_distribution: bool) -> Dict[str, Any]:
+        """Mock turbine ideal energy analysis."""
+        metadata = self.get_sample_plant_metadata()
+        capacity_mw = metadata.get("capacity", 10.5)
+        
+        # Calculate ideal energy based on typical values
+        hours_per_year = 8760
+        ideal_capacity_factor = 0.45  # Higher than actual since it's \"ideal\"
+        ideal_energy_gwh = (capacity_mw * ideal_capacity_factor * hours_per_year) / 1000
+        
+        return {
+            "ideal_energy_gwh": round(ideal_energy_gwh, 2),
+            "ideal_capacity_factor_pct": round(ideal_capacity_factor * 100, 1),
+            "use_lt_distribution": use_lt_distribution,
+            "plant_capacity_mw": capacity_mw,
+            "num_turbines": metadata.get("num_turbines", 4),
+            "analysis_type": "turbine_ideal_energy_mock",
+            "notes": "Mock analysis for demonstration - USE_MOCK_DATA=True"
+        }
+    
+    def _run_real_turbine_ideal_energy(self, use_lt_distribution: bool, **kwargs) -> Dict[str, Any]:
+        """Real OpenOA turbine ideal energy analysis."""
+        try:
+            from openoa.analysis import TurbineLongTermGrossEnergy
+            
+            logger.info("Loading plant data for turbine ideal energy analysis")
+            plant_data = self._load_real_plant_data()
+            
+            logger.info("Initializing TurbineLongTermGrossEnergy analysis")
+            analysis = TurbineLongTermGrossEnergy(plant=plant_data, **kwargs)
+            
+            logger.info("Running turbine ideal energy analysis")
+            analysis.run(use_lt_distribution=use_lt_distribution)
+            
+            results_df = analysis.results
+            result_dict = results_df.iloc[0].to_dict() if not results_df.empty else {}
+            
+            capacity_mw = plant_data.metadata.capacity if hasattr(plant_data, 'metadata') else 8.2
+            ideal_energy_gwh = float(result_dict.get('gross_energy_gwh', result_dict.get('ideal_energy', 0)))
+            
+            return {
+                "ideal_energy_gwh": round(ideal_energy_gwh, 2),
+                "use_lt_distribution": use_lt_distribution,
+                "plant_capacity_mw": capacity_mw,
+                "analysis_type": "turbine_ideal_energy_real",
+                "notes": "Real OpenOA turbine ideal energy analysis",
+                "raw_columns": list(results_df.columns)
+            }
+        except ImportError:
+            raise ImportError("OpenOA library not found. Install it with: pip install openoa")
+        except Exception as e:
+            logger.error(f"Turbine ideal energy analysis failed: {e}", exc_info=True)
+            raise
+    
+    def run_eya_gap_analysis(self, expected_aep_gwh: float, **kwargs) -> Dict[str, Any]:
+        """Run EYA gap analysis comparing actual vs expected AEP.
+        
+        Args:
+            expected_aep_gwh: Expected AEP from energy yield assessment.
+            **kwargs: Additional analysis parameters.
+            
+        Returns:
+            dict: EYA gap analysis results.
+        """
+        if settings.use_mock_data:
+            logger.info(f"Running MOCK EYA gap analysis")
+            return self._run_mock_eya_gap_analysis(expected_aep_gwh)
+        else:
+            logger.info(f"Running REAL OpenOA EYA gap analysis")
+            return self._run_real_eya_gap_analysis(expected_aep_gwh, **kwargs)
+    
+    def _run_mock_eya_gap_analysis(self, expected_aep_gwh: float) -> Dict[str, Any]:
+        """Mock EYA gap analysis."""
+        metadata = self.get_sample_plant_metadata()
+        capacity_mw = metadata.get("capacity", 10.5)
+        
+        # Get actual AEP from our mock AEP analysis
+        aep_result = self._run_mock_aep_analysis(1000)
+        actual_aep_gwh = aep_result["aep_gwh"]
+        
+        gap_gwh = actual_aep_gwh - expected_aep_gwh
+        gap_pct = (gap_gwh / expected_aep_gwh) * 100
+        
+        return {
+            "expected_aep_gwh": round(expected_aep_gwh, 2),
+            "actual_aep_gwh": round(actual_aep_gwh, 2),
+            "gap_gwh": round(gap_gwh, 2),
+            "gap_pct": round(gap_pct, 2),
+            "meets_expectations": gap_pct >= -5,  # Within 5% is acceptable
+            "plant_capacity_mw": capacity_mw,
+            "analysis_type": "eya_gap_analysis_mock",
+            "notes": "Mock analysis for demonstration - USE_MOCK_DATA=True"
+        }
+    
+    def _run_real_eya_gap_analysis(self, expected_aep_gwh: float, **kwargs) -> Dict[str, Any]:
+        """Real OpenOA EYA gap analysis."""
+        try:
+            # First run AEP analysis to get actual AEP
+            aep_result = self._run_real_aep_analysis(1000, **kwargs)
+            actual_aep_gwh = aep_result["aep_gwh"]
+            
+            gap_gwh = actual_aep_gwh - expected_aep_gwh
+            gap_pct = (gap_gwh / expected_aep_gwh) * 100
+            
+            return {
+                "expected_aep_gwh": round(expected_aep_gwh, 2),
+                "actual_aep_gwh": round(actual_aep_gwh, 2),
+                "gap_gwh": round(gap_gwh, 2),
+                "gap_pct": round(gap_pct, 2),
+                "meets_expectations": gap_pct >= -5,
+                "analysis_type": "eya_gap_analysis_real",
+                "notes": "Real OpenOA EYA gap analysis"
+            }
+        except ImportError:
+            raise ImportError("OpenOA library not found. Install it with: pip install openoa")
+        except Exception as e:
+            logger.error(f"EYA gap analysis failed: {e}", exc_info=True)
+            raise
 
 
 # Singleton instance

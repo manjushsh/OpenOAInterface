@@ -161,6 +161,62 @@ class AEPResult(BaseModel):
     }
 
 
+class ElectricalLossesRequest(BaseModel):
+    """Request schema for electrical losses analysis."""
+    
+    loss_threshold_pct: Optional[float] = Field(5.0, description="Loss threshold percentage", ge=0, le=100)
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "loss_threshold_pct": 5.0
+            }
+        }
+    }
+
+
+class WakeLossesRequest(BaseModel):
+    """Request schema for wake losses analysis."""
+    
+    bin_width: Optional[float] = Field(1.0, description="Wind speed bin width (m/s)", ge=0.5, le=5.0)
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "bin_width": 1.0
+            }
+        }
+    }
+
+
+class TurbineIdealEnergyRequest(BaseModel):
+    """Request schema for turbine ideal energy analysis."""
+    
+    use_lt_distribution: Optional[bool] = Field(True, description="Use long-term wind distribution")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "use_lt_distribution": True
+            }
+        }
+    }
+
+
+class EYAGapAnalysisRequest(BaseModel):
+    """Request schema for EYA gap analysis."""
+    
+    expected_aep_gwh: float = Field(..., description="Expected AEP from energy yield assessment (GWh)")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "expected_aep_gwh": 35.0
+            }
+        }
+    }
+
+
 class AnalysisResponse(BaseModel):
     """Generic analysis response wrapper."""
     
