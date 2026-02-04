@@ -17,7 +17,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS
-        value: https://openoa-frontend.onrender.com
+        value: '["https://openoa-frontend.onrender.com"]'
       - key: LOG_LEVEL
         value: info
       - key: PYTHON_VERSION

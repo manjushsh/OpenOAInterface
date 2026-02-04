@@ -273,7 +273,7 @@ pnpm install
 pnpm dev
 ```env
 ENVIRONMENT=development
-CORS_ORIGINS=http://localhost:5173
+CORS_ORIGINS=["http://localhost:5173"]
 LOG_LEVEL=debug
 USE_REAL_OPENOA=true
 ```
